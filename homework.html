@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Домашка — промпты для opencode</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #000;
+    --white: #fff;
+    --gray: #888;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: var(--black);
+    color: var(--white);
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 8vh 6vw 12vh;
+  }
+
+  h1 {
+    font-size: 5.5vw;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  @media (min-width: 900px) { h1 { font-size: 56px; } }
+
+  .subtitle {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--gray);
+    margin-top: 3vh;
+    max-width: 60ch;
+    line-height: 1.5;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4vh;
+  }
+  .chip {
+    border: 2px solid var(--white);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .chip.solid {
+    background: var(--white);
+    color: var(--black);
+  }
+
+  .step {
+    margin-top: 9vh;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1);
+  }
+  .step.visible { opacity: 1; transform: none; }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+  .num {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .step h2 {
+    font-size: 26px;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .step .hint {
+    font-size: 15px;
+    color: var(--gray);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .prompt {
+    position: relative;
+    margin-top: 20px;
+    border: 2px solid var(--white);
+    border-radius: 16px;
+    background: var(--black);
+  }
+  .prompt pre {
+    padding: 24px 24px 56px;
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--white);
+  }
+  .prompt .ph { color: var(--gray); font-style: italic; }
+
+  .copy {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    border-radius: 100px;
+    padding: 8px 20px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+  }
+  .copy:hover { transform: scale(1.06); }
+  .copy:active { transform: scale(0.96); }
+  .copy.done { background: transparent; color: var(--white); border: 2px solid var(--white); padding: 6px 18px; }
+
+  .final {
+    margin-top: 10vh;
+    border-top: 2px solid var(--white);
+    padding-top: 5vh;
+  }
+  .final .accent {
+    font-size: 30px;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .final p {
+    margin-top: 16px;
+    color: var(--gray);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+  .final b { color: var(--white); }
+
+  .footer {
+    margin-top: 8vh;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translate(-50%, 80px);
+    background: var(--white);
+    color: var(--black);
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 28px;
+    border-radius: 100px;
+    transition: transform .35s cubic-bezier(.22,.61,.36,1);
+    z-index: 10;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .step, .toast { transition: none; }
+    .step { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Домашка</h1>
+  <div class="subtitle">
+    Шесть промптов для opencode. Меняй текст в <span style="color:var(--white)">[серых скобках]</span> под свой продукт,
+    жми «Копировать» и вставляй в opencode — по одному шагу за раз, в том же порядке.
+  </div>
+  <div class="chips">
+    <div class="chip">Opencode</div>
+    <div class="chip">MVP</div>
+    <div class="chip solid">Парето 80/20</div>
+  </div>
+
+  <!-- Шаг 1 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 1</span><h2>Идея: название, аудитория, проблема</h2></div>
+    <div class="hint">Заполни первые две строки — кто твой пользователь и что делает продукт.</div>
+    <div class="prompt">
+<pre data-prompt="Я делаю продукт: [название], который делает [что делает, 1-2 предложения].
+
+Помоги оформить идею:
+1. Кто целевая аудитория — опиши 2-3 группы людей простыми словами.
+2. Какая главная проблема каждой группы, которую решает мой продукт.
+3. Сформулируй идею одним предложением: «[Название] помогает [кому] решить [какую проблему]».
+
+Пиши просто, без умных слов."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <!-- Шаг 2 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 2</span><h2>Конкуренты: 2–3 аналога</h2></div>
+    <div class="hint">Вставь одно предложение про продукт из ответа на шаг 1.</div>
+    <div class="prompt">
+<pre data-prompt="Мой продукт: [название] — [одно предложение из шага 1].
+
+Найди 2-3 существующих аналога на рынке.
+По каждому напиши:
+1. Название и ссылка на сайт.
+2. Что у них хорошо.
+3. Что у них плохо / чего не хватает.
+4. Чем мой продукт может быть лучше."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <!-- Шаг 3 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 3</span><h2>Список всех функций (минимум 10)</h2></div>
+    <div class="hint">Здесь получается «всё, что можно сделать» — без паники, дальше отсеем.</div>
+    <div class="prompt">
+<pre data-prompt="Мой продукт: [название] — [одно предложение]. Аудитория: [из шага 1].
+
+Составь список ВСЕХ возможных функций этого продукта, минимум 10 штук.
+Расположи от самой нужной к самой ненужной.
+К каждой функции напиши одним предложением, какую проблему пользователя она решает."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <!-- Шаг 4 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 4</span><h2>Выделить 20% функций (Парето)</h2></div>
+    <div class="hint">Вставь список из шага 3 целиком — нейронка отберёт главные 2–3 функции.</div>
+    <div class="prompt">
+<pre data-prompt="Вот список функций моего продукта:
+[вставь список из шага 3]
+
+По правилу Парето выбери 2-3 ключевые функции, которые решают 80% проблем пользователей.
+Напиши по каждой выбранной функции: почему именно она и что случится, если её не будет.
+Остальные функции пометь как «добавим потом после проверки идеи»."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <!-- Шаг 5 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 5</span><h2>Обоснование выбора (итоговый документ)</h2></div>
+    <div class="hint">Нейронка соберёт всё в готовый отчёт — его сдаёшь как есть.</div>
+    <div class="prompt">
+<pre data-prompt="Собери всё выше в короткий итоговый документ:
+1. Идея (1 предложение).
+2. Аудитория и проблема.
+3. Конкуренты и их минусы.
+4. 2-3 ключевые функции MVP с обоснованием.
+5. Что сознательно НЕ включаем в MVP и почему.
+
+Оформи списками, чтобы можно было вставить в отчёт."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <!-- Шаг 6 -->
+  <section class="step">
+    <div class="step-head"><span class="num">Шаг 6 · бонус</span><h2>Собрать главный экран MVP</h2></div>
+    <div class="hint">Финал: opencode соберёт экран по ключевым функциям. Скриншот — в отчёт.</div>
+    <div class="prompt">
+<pre data-prompt="На основе нашего MVP собери одну HTML-страницу — главный экран продукта [название].
+Только 2-3 ключевые функции: [вставь из шага 4].
+Стиль: чёрно-белый, простой, крупный заголовок, одна кнопка действия.
+Без лишних блоков."></pre>
+      <button class="copy">Копировать</button>
+    </div>
+  </section>
+
+  <section class="step final">
+    <div class="accent">Что сдать</div>
+    <p>
+      <b>Скриншот экрана из шага 6</b> + <b>промпты с ответами нейронки</b> по шагам 1–5.
+      Промпт — это твой новый wireframe: оцениваем постановку задачи, а не ровность пикселей.
+    </p>
+    <div class="footer">Напрягаться на 20%, больше не нужно</div>
+  </section>
+</div>
+
+<div class="toast" id="toast">Скопировано — вставляй в opencode</div>
+
+<script>
+  // серые плейсхолдеры [в скобках]
+  document.querySelectorAll('pre[data-prompt]').forEach(pre => {
+    let html = pre.dataset.prompt
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/\[([^\]]+)\]/g, '<span class="ph">[$1]</span>');
+    pre.innerHTML = html;
+  });
+
+  const toast = document.getElementById('toast');
+  let toastTimer;
+
+  function showToast() {
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.parentElement.querySelector('pre').dataset.prompt;
+      const finish = () => {
+        btn.textContent = 'Готово';
+        btn.classList.add('done');
+        showToast();
+        setTimeout(() => {
+          btn.textContent = 'Копировать';
+          btn.classList.remove('done');
+        }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(finish).catch(() => fallback(text, finish));
+      } else {
+        fallback(text, finish);
+      }
+    });
+  });
+
+  function fallback(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // каскадное появление шагов при скролле
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        en.target.classList.add('visible');
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.step').forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>
